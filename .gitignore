@@ -8,3 +8,4 @@ webpack.local-settings.js
 /lib
 /local
 .idea/
+/db.sqlite3
