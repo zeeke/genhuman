@@ -17,10 +17,12 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.views import generic
 
-from djreact import views
+from genetic_human import views
 
 urlpatterns = [
-    url(r'^api/v1/search', views.search_events_by_latitude_and_longitude),
+    url(r'^api/v1/algorithms', views.get_algorithms),
+    url(r'^api/v1/algorithms/(?P<algorithm_id>[0-9]+)/individuals', views.fetch_individuals),
+    url(r'^api/v1/algorithms/(?P<algorithm_id>[0-9]+)/individuals/update', views.update_individual),
     url(r'^admin/', admin.site.urls),
     url(r'^app2/', generic.TemplateView.as_view(template_name='sample_app2.html')),
     url(r'^$', generic.TemplateView.as_view(template_name='sample_app.html')),

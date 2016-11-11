@@ -5,12 +5,18 @@ import { connect } from "react-redux"
   algorithm: state.algorithm
 }))
 export default class AlgorithmPage extends React.Component {
+
+    onRefresh = (event) => {
+      this.props.dispatch(actions.fetchIndividuals())
+    }
+
     render() {
-      let renderItem = (item) => { return (<Individual key={item.data} item={item} />) }
+      let renderItem = (item) => { return (<Individual key={item.id} item={item} />) }
 
       return (
         <div>
           <Individual item={this.props.algorithm.currentBestIndividual} />
+          <button className="btn btn-primary" onClick={this.onRefresh}>Refresh</button>
           <div className="row">
             {this.props.algorithm.individuals.map(renderItem)}
           </div>
@@ -22,21 +28,22 @@ export default class AlgorithmPage extends React.Component {
 class Individual extends React.Component {
 
   onSearchTextChange = (event) => {
-    this.props.dispatch(algorithmActions.individualValueChange(this.props.item.data, event.target.value))
+    this.props.dispatch(algorithmActions.individualValueChange(this.props.item.id, event.target.value))
   }
 
   onSubmit = (event) => {
-    this.props.dispatch(algorithmActions.individualSubmitValue(this.props.item.data, this.props.item.value))
+    this.props.dispatch(algorithmActions.individualSubmitValue(this.props.item.id, this.props.item.value))
   }
 
   render() {
     var template = this.props.algorithm.template
-    var properties this.props.algorithm.properties
-    var jsonData = JSON.parse(this.props.item.data)
+    var genes this.props.algorithm.genes
+    var jsonData = JSON.parse(this.props.item.genoma)
 
     var xmlString = template;
-    properties.forEach(function(property) {
-      xmlString = xmlString.replace("{{" + property.name + "}}", jsonData[property.name])
+    genes.forEach(function(gene) {
+        // TODO - Client conversion
+      xmlString = xmlString.replace("{{" + gene.name + "}}", jsonData[gene.name])
     });
 
 

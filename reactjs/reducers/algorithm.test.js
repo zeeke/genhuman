@@ -6,10 +6,11 @@ describe('algorithm reducer', () => {
     let fetchResponseAction = {
       type: actions.FETCH_INDIVIDUALS_RESPONSE,
       res: {
-        items: [
+        individuals: [
             {
+                id: 666,
                 value: -1,
-                data: '{a: 10}'
+                genoma: { a: 10 }
             }
         ]
       }
@@ -17,14 +18,14 @@ describe('algorithm reducer', () => {
 
     let submitAction = {
       type: actions.SUBMIT_INDIVIDUAL_VALUE,
-      individualData: '{a: 10}',
-      newValue: 42
+      individualId: 666,,
+      value: 42
     }
 
     let submitResponseAction = {
       type: actions.SUBMIT_INDIVIDUAL_VALUE_RESPONSE,
       status: 'SUCCESS',
-      individualData: '{a: 10}',
+      id: 666,
       value: 42,
       res: {}
     }
@@ -32,15 +33,15 @@ describe('algorithm reducer', () => {
     var state = undefined;
 
     state = reducer(state, fetchResponseAction)
-    expect(state.individuals['{a: 10}'].value).toBe(-1)
+    expect(state.individuals[666].value).toBe(-1)
 
     state = reducer(state, submitAction)
-    expect(state.individuals['{a: 10}'].loading).toBe(true)
+    expect(state.individuals[666].loading).toBe(true)
 
     state = reducer(state, submitResponseAction)
-    expect(state.individuals['{a: 10}'].loading).toBe(false)
-    expect(state.individuals['{a: 10}'].saved).toBe(true)
-    expect(state.individuals['{a: 10}'].value).toBe(42)
+    expect(state.individuals[666].loading).toBe(false)
+    expect(state.individuals[666].saved).toBe(true)
+    expect(state.individuals[666].value).toBe(42)
   })
 
   it('should update best individual', () => {
@@ -48,14 +49,17 @@ describe('algorithm reducer', () => {
     let fetchResponseAction1 = {
       type: actions.FETCH_INDIVIDUALS_RESPONSE,
       res: {
+        meta: {},
         items: [
             {
+                id: 666,
                 value: -1,
-                data: '{a:100}'
+                genoma: { a: 10 }
             },
             {
+                id: 777,
                 value: 42,
-                data: '{a:42}'
+                genoma: { a: 42 }
             }
         ]
       }
@@ -64,14 +68,17 @@ describe('algorithm reducer', () => {
     let fetchResponseAction2 = {
       type: actions.FETCH_INDIVIDUALS_RESPONSE,
       res: {
+        meta: {},
         items: [
             {
+                id: 666,
                 value: 100,
-                data: '{a:100}'
+                genoma: { a: 10 }
             },
             {
+                id: 777,
                 value: 42,
-                data: '{a:42}'
+                genoma: { a: 42 }
             }
         ]
       }
@@ -80,11 +87,11 @@ describe('algorithm reducer', () => {
     var state = undefined
     state = reducer(state, fetchResponseAction1)
 
-    expect(state.bestIndividual).toBe('{a:42}')
+    expect(state.bestIndividual).toBe(777)
 
     state = reducer(state, fetchResponseAction2)
 
-    expect(state.bestIndividual).toBe('{a:100}')
+    expect(state.bestIndividual).toBe(666)
   })
 })
 
