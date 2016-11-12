@@ -17,7 +17,6 @@ export default function submission(state=initialState, action={}) {
 
   switch(action.type) {
     case actions.INDIVIDUAL_VALUE_CHANGE:
-        console.log(state);
         return update(state, {
             individuals: {
                 [action.individualId]: {

@@ -46,28 +46,40 @@ class Individual extends React.Component {
     this.props.dispatch(algorithmActions.submitIndividualValue(this.props.algorithm.id, this.props.item.id, this.props.item.value))
   }
 
+  getClientValue = (jsonData, gene) => {
+    switch(gene.gene_type) {
+        case 'COLOR':
+            return `rgb(${JSON.parse(jsonData[gene.name]).join(',')})`
+        default:
+            throw new Error("Cannot convert gene type " + gene.gene_type)
+    }
+  }
+
   render() {
     var template = this.props.algorithm.template
     var genes = this.props.algorithm.genes
     var jsonData = this.props.item.genoma
 
+    var toShowData = {}
+
     var xmlString = template;
     genes.forEach(function(gene) {
-        // TODO - Client conversion
-      xmlString = xmlString.replace("{{" + gene.name + "}}", jsonData[gene.name])
-    });
+      toShowData[gene.name] = this.getClientValue(jsonData, gene)
+      xmlString = xmlString.replace(new RegExp("{{" + gene.name + "}}", 'g'), this.getClientValue(jsonData, gene))
+    }.bind(this));
 
 
     let loading = this.props.item.loading ? <p>Loading ...</p> : <p></p>
 
     return (
-      <div className="col-md-4">
+      <div className="col-md-3">
         <div className="thumbnail">
           <div className="template-view" dangerouslySetInnerHTML={{__html: xmlString}}>
           </div>
+          <pre>{JSON.stringify(toShowData, null, 2)}</pre>
           {loading}
           <div className="form-inline">
-            <div className="form-group">
+            <div className={ "form-group " + (this.props.item.saved ? 'has-success': '') } >
               <label className="sr-only">Value</label>
               <input type="number"
                      className="form-control"

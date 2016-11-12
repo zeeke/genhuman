@@ -104,7 +104,7 @@ def start_algorithm(algorithm_id):
 
 
 def select_survived_individuals(individuals, n):
-    sorted_individuals = sorted(individuals, key=lambda individual: individual.fitness_value)
+    sorted_individuals = sorted(individuals, key=lambda individual: -1 * individual.fitness_value)
     return sorted_individuals[:n]
 
 
@@ -149,7 +149,7 @@ def generate_via_mutation(genes, individuals, n):
 
         for i in range(len(genes) / 2):
             mutant_gene = select_random(genes)
-            mutant_genoma = Genoma.object.get(gene=mutant_gene, individual=mutant)
+            mutant_genoma = Genoma.objects.get(gene=mutant_gene, individual=mutant)
             mutant_genoma.string_value = mutant_gene.generate_random()
             mutant_genoma.save()
 
@@ -169,7 +169,7 @@ def update_generation_if_complete(algorithm_id):
     current_individuals = current_generation.individuals.all()
     survived_individuals = select_survived_individuals(current_individuals, int(population_size * 0.3))
     sons = generate_via_crossover(genes, current_individuals, int(population_size * 0.6))
-    mutants = generate_via_mutation(algorithm, current_individuals, int(population_size * 0.1))
+    mutants = generate_via_mutation(genes, current_individuals, int(population_size * 0.1))
     number_of_individuals_to_generate = population_size - len(survived_individuals) - len(sons) - len(mutants)
 
     new_individuals = []
