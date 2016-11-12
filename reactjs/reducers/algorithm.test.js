@@ -6,7 +6,7 @@ describe('algorithm reducer', () => {
     let fetchResponseAction = {
       type: actions.FETCH_INDIVIDUALS_RESPONSE,
       res: {
-        individuals: [
+        items: [
             {
                 id: 666,
                 value: -1,
@@ -18,14 +18,14 @@ describe('algorithm reducer', () => {
 
     let submitAction = {
       type: actions.SUBMIT_INDIVIDUAL_VALUE,
-      individualId: 666,,
+      individualId: 666,
       value: 42
     }
 
     let submitResponseAction = {
       type: actions.SUBMIT_INDIVIDUAL_VALUE_RESPONSE,
       status: 'SUCCESS',
-      id: 666,
+      individualId: 666,
       value: 42,
       res: {}
     }

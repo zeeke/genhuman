@@ -1,12 +1,13 @@
 import React from "react"
 import Radium from "radium"
-import { Router, Route, Link } from 'react-router'
+import { Router, Route, Link, browserHistory } from 'react-router'
 
 import { connect } from "react-redux"
 
 import * as counterActions from "../actions/counterActions"
 import Headline from "../components/Headline"
 import StartPage from './StartPage'
+import AlgorithmPage from './AlgorithmPage'
 
 const styles = {
   button: {
@@ -21,7 +22,6 @@ const styles = {
 @connect(state => ({
   counters: state.counters,
 }))
-@Radium
 export default class SampleAppContainer extends React.Component {
   handleClick() {
     let {dispatch} = this.props;
@@ -40,9 +40,8 @@ export default class SampleAppContainer extends React.Component {
           <div className="col-sm-12">
             <Headline>Sample App!</Headline>
             <Router history={browserHistory}>
-              <Route path="/" component={StartPage}>
-                <Route path="algorithms/:algorithmsId" component={AlgorithmPage} />
-              </Route>
+              <Route path="/" component={StartPage} />
+              {/* <Route path="/algorithms/:algorithmId" component={AlgorithmPage} /> */}
             </Router>
           </div>
         </div>

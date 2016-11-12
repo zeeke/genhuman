@@ -15,11 +15,20 @@ class Algorithm(models.Model):
     template = models.TextField()
     options = models.ForeignKey(AlgorithmOptions, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return "(Algorithm) " + self.title
+
 
 class Individual(models.Model):
     fitness_value = models.FloatField()
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
 
+    def get_as_json(self):
+        item = {'id': self.id, 'value': self.fitness_value, 'genoma': {}}
+        genoma_items = Genoma.objects.filter(individual=self)
+        for genoma_item in genoma_items:
+            item['genoma'][genoma_item.gene.name] = genoma_item.string_value
+        return item
 
 class Generation(models.Model):
     number = models.IntegerField()

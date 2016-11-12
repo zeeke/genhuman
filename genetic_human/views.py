@@ -1,15 +1,27 @@
+import json
 import random
 
+from django.db import transaction
 from django.db.models.aggregates import Max
 from django.http.response import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from genetic_human.models import Algorithm, Gene, Generation, Individual, Genoma
 
 
+@require_http_methods(["GET"])
 def get_algorithms(request):
     items = []
     for algorithm in Algorithm.objects.all():
-        item = {'population_size': algorithm.population_size, 'genes': []}
+        item = {
+            'id': algorithm.id,
+            'title': algorithm.title,
+            'template': algorithm.template,
+            'population_size': algorithm.options.population_size,
+            'genes': []
+        }
+
         for gene in Gene.objects.filter(algorithm=algorithm):
             item['genes'].append({'name': gene.name, 'gene_type': gene.gene_type})
 
@@ -21,24 +33,29 @@ def get_algorithms(request):
     })
 
 
+@csrf_exempt
+@require_http_methods(["POST"])
+def reset_algorithm(request, algorithm_id):
+    algorithm = Algorithm.objects.get(id=algorithm_id)
+    Generation.objects.filter(algorithm=algorithm).all().delete()
+    return JsonResponse({
+        'meta': {}
+    })
+
+
+@require_http_methods(["GET"])
 def fetch_individuals(request, algorithm_id):
     if Generation.objects.filter(algorithm_id=algorithm_id).count() == 0:
         start_algorithm(algorithm_id)
 
-    algorithm = Algorithm.objects.get(algorithm_id)
+    algorithm = Algorithm.objects.get(id=algorithm_id)
     current_generation_number = get_current_generation_number(algorithm)
 
     current_generation = Generation.objects.get(algorithm=algorithm, number=current_generation_number)
 
     items = []
-    for individual in current_generation.individuals:
-        item = {'id': individual.id, 'value': individual.fitness_value, 'genoma': {}}
-        genoma_items = Genoma.objects.filter(individual=individual)
-
-        for genoma_item in genoma_items:
-            item['genoma'][genoma_item.gene.name] = genoma_item.string_value
-
-        items.append(item)
+    for individual in current_generation.individuals.all():
+        items.append(individual.get_as_json())
 
     return JsonResponse({
         'meta': {},
@@ -46,29 +63,44 @@ def fetch_individuals(request, algorithm_id):
     })
 
 
+@csrf_exempt
+@require_http_methods(["POST"])
+@transaction.atomic
 def update_individual(request, algorithm_id):
-    individual_id = request.POST['individual_id']
-    value = float(request.POST['value'])
+    body = json.loads(request.body)
+    individual_id = body['individual_id']
+    value = float(body['value'])
 
-    individual = Individual.objects.get(individual_id)
+    individual = Individual.objects.get(id=individual_id)
     individual.fitness_value = value
     individual.save()
 
     update_generation_if_complete(algorithm_id)
 
+    return JsonResponse({
+        'meta': {}
+    })
+
 
 def create_individual(algorithm, genes):
     individual = Individual(fitness_value=-1, algorithm=algorithm)
+    individual.save()
 
     for gene in genes:
         Genoma(gene=gene, individual=individual, string_value=gene.generate_random()).save()
 
+    return individual
+
 
 def start_algorithm(algorithm_id):
-    algorithm = Algorithm.objects.get(algorithm_id)
+    algorithm = Algorithm.objects.get(id=algorithm_id)
     genes = Gene.objects.filter(algorithm_id=algorithm.id)
+
+    individuals = []
     for i in range(algorithm.options.population_size):
-        create_individual(algorithm, genes)
+        individuals.append(create_individual(algorithm, genes))
+
+    create_generation(algorithm, 0, individuals)
 
 
 def select_survived_individuals(individuals, n):
@@ -85,8 +117,8 @@ def generate_son_via_crossover(genes, father, mother):
     son.save()
 
     for gene in genes:
-        father_side = Genoma.get(individual=father, gene=gene)
-        mother_side = Genoma.get(individual=mother, gene=gene)
+        father_side = Genoma.objects.get(individual=father, gene=gene)
+        mother_side = Genoma.objects.get(individual=mother, gene=gene)
         Genoma(gene=gene, individual=son, string_value=gene.mix(father_side, mother_side)).save()
 
     return son
@@ -125,7 +157,7 @@ def generate_via_mutation(genes, individuals, n):
 
 
 def update_generation_if_complete(algorithm_id):
-    algorithm = Algorithm.objects.get(algorithm_id)
+    algorithm = Algorithm.objects.get(id=algorithm_id)
     current_generation_number = get_current_generation_number(algorithm)
     current_generation = Generation.objects.get(algorithm=algorithm, number=current_generation_number)
     if not is_generation_complete(current_generation):
@@ -134,27 +166,33 @@ def update_generation_if_complete(algorithm_id):
     population_size = algorithm.options.population_size
     genes = Gene.objects.filter(algorithm_id=algorithm.id)
 
-    survived_individuals = select_survived_individuals(current_generation.individuals, population_size * 0.3)
-    sons = generate_via_crossover(genes, current_generation.individuals, population_size * 0.6)
-    mutatants = generate_via_mutation(algorithm, current_generation.individuals, population_size * 0.1)
-    number_of_individuals_to_generate = population_size - len(survived_individuals) - len(sons) - len(mutatants)
+    current_individuals = current_generation.individuals.all()
+    survived_individuals = select_survived_individuals(current_individuals, int(population_size * 0.3))
+    sons = generate_via_crossover(genes, current_individuals, int(population_size * 0.6))
+    mutants = generate_via_mutation(algorithm, current_individuals, int(population_size * 0.1))
+    number_of_individuals_to_generate = population_size - len(survived_individuals) - len(sons) - len(mutants)
 
+    new_individuals = []
     for _ in range(number_of_individuals_to_generate):
-        create_individual(algorithm, genes)
+        new_individuals.append(create_individual(algorithm, genes))
 
-    new_generation = Generation(number=current_generation_number + 1, algorithm=algorithm)
-    for individual in survived_individuals + sons + mutatants + number_of_individuals_to_generate:
+    create_generation(algorithm, current_generation_number + 1, mutants + new_individuals + sons + survived_individuals)
+
+
+def create_generation(algorithm, generation_number, individuals):
+    new_generation = Generation(number=generation_number, algorithm=algorithm)
+    new_generation.save()
+    for individual in individuals:
         new_generation.individuals.add(individual)
-
     new_generation.save()
 
 
 def get_current_generation_number(algorithm):
-    return Generation.objects.filter(algorithm=algorithm).aggregate(Max('number'))
+    return Generation.objects.filter(algorithm=algorithm).aggregate(Max('number'))['number__max']
 
 
 def is_generation_complete(generation):
-    for individual in generation.individuals:
+    for individual in generation.individuals.all():
         if individual.fitness_value < 0:
             return False
 

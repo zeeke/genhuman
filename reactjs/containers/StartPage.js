@@ -1,27 +1,48 @@
 import React from "react"
 import { connect } from "react-redux"
+import * as algorithmActions from "../actions/algorithmActions"
+import { Link } from 'react-router'
+import AlgorithmPage from './AlgorithmPage'
 
-@connect(state => ({
-  algorithms: state.algorithms
-}))
+@connect(state => (
+   state.algorithms
+))
 export default class StartPage extends React.Component {
-    render() {
-      let renderItem = (item) => { return (<AlgorithmItem key={item.id} item={item} />) }
 
+    componentDidMount() {
+      this.props.dispatch(algorithmActions.fetchAlgorithms())
+    }
+
+    render() {
+      let renderItem = (item) => {
+        return (<AlgorithmItem key={item.id} dispatch={this.props.dispatch} item={item} />)
+      }
+
+      var currentAlgorithmSection = this.props.currentAlgorithm == undefined ? '' : (<AlgorithmPage />)
       return (
         <div>
-            <p>{this.props.algorithm.status}</p>
-            {this.props.items.map(renderItem)}
+            {this.props.algorithms.map(renderItem)}
+            {currentAlgorithmSection}
         </div>
       )
     }
 }
 
 class AlgorithmItem extends React.Component {
+
+  onSelectAlgorithm = (event) => {
+    this.props.dispatch(algorithmActions.openAlgorithm(this.props.item.id))
+  }
+
   render() {
     return (
-      <div>{this.props.item.id}</div>
+      <div key={this.props.item.id}>
+        {/*<Link to={`/algorithms/${this.props.item.id}`}>{this.props.item.title} - boia</Link>*/}
+        <button className="btn btn-primary"
+                onClick={this.onSelectAlgorithm}>
+                {this.props.item.title} - boia
+        </button>
+      </div>
     )
   }
 }
-
