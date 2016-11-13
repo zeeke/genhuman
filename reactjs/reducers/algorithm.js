@@ -20,7 +20,8 @@ export default function submission(state=initialState, action={}) {
         return update(state, {
             individuals: {
                 [action.individualId]: {
-                    value: {$set: action.newValue}
+                    value: {$set: action.newValue},
+                    saved: {$set: false}
                 }
             }
         })

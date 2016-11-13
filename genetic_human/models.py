@@ -38,9 +38,12 @@ class Generation(models.Model):
 
 
 class Gene(models.Model):
-    name = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=50)
     gene_type = models.CharField(max_length=50)
     algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "({}) {}".format(self.gene_type, self.name)
 
     def generate_random(self):
         if self.gene_type == 'COLOR':

@@ -103,7 +103,11 @@ def start_algorithm(algorithm_id):
     create_generation(algorithm, 0, individuals)
 
 
-def select_survived_individuals(individuals, n):
+def select_elite_individuals(individuals, n):
+    return select_top_n(individuals, n)
+
+
+def select_top_n(individuals, n):
     sorted_individuals = sorted(individuals, key=lambda individual: -1 * individual.fitness_value)
     return sorted_individuals[:n]
 
@@ -163,20 +167,21 @@ def update_generation_if_complete(algorithm_id):
     if not is_generation_complete(current_generation):
         return
 
+    create_new_generation(algorithm, current_generation)
+
+
+def create_new_generation(algorithm, current_generation):
     population_size = algorithm.options.population_size
     genes = Gene.objects.filter(algorithm_id=algorithm.id)
-
     current_individuals = current_generation.individuals.all()
-    survived_individuals = select_survived_individuals(current_individuals, int(population_size * 0.3))
-    sons = generate_via_crossover(genes, current_individuals, int(population_size * 0.6))
+    elite_individuals = select_elite_individuals(current_individuals, int(population_size * 0.1))
+    sons = generate_via_crossover(genes, select_top_n(current_individuals, int(population_size * 0.6)), int(population_size * 0.8))
     mutants = generate_via_mutation(genes, current_individuals, int(population_size * 0.1))
-    number_of_individuals_to_generate = population_size - len(survived_individuals) - len(sons) - len(mutants)
-
+    number_of_individuals_to_generate = population_size - len(elite_individuals) - len(sons) - len(mutants)
     new_individuals = []
     for _ in range(number_of_individuals_to_generate):
         new_individuals.append(create_individual(algorithm, genes))
-
-    create_generation(algorithm, current_generation_number + 1, mutants + new_individuals + sons + survived_individuals)
+    create_generation(algorithm, current_generation.number + 1, mutants + new_individuals + sons + elite_individuals)
 
 
 def create_generation(algorithm, generation_number, individuals):
