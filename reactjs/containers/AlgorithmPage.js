@@ -50,6 +50,8 @@ class Individual extends React.Component {
     switch(gene.gene_type) {
         case 'COLOR':
             return `rgb(${JSON.parse(jsonData[gene.name]).join(',')})`
+        case 'FLOAT':
+            return jsonData[gene.name]
         default:
             throw new Error("Cannot convert gene type " + gene.gene_type)
     }

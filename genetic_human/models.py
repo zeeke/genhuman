@@ -16,7 +16,7 @@ class Algorithm(models.Model):
     options = models.ForeignKey(AlgorithmOptions, on_delete=models.CASCADE)
 
     def __str__(self):
-        return "(Algorithm) " + self.title
+        return "(Algorithm) " + self.title.__str__()
 
 
 class Individual(models.Model):
@@ -29,6 +29,7 @@ class Individual(models.Model):
         for genoma_item in genoma_items:
             item['genoma'][genoma_item.gene.name] = genoma_item.string_value
         return item
+
 
 class Generation(models.Model):
     number = models.IntegerField()
@@ -48,17 +49,28 @@ class Gene(models.Model):
                 random.randrange(0, 256),
                 random.randrange(0, 256),
             ])
+        elif self.gene_type == 'FLOAT':
+            return str(random.random())
+        else:
+            raise Exception("Can't generate gene type " + self.gene_type.__str__())
 
     def mix(self, father_genoma, mother_genoma):
         if self.gene_type == 'COLOR':
             father_value = json.loads(father_genoma.string_value)
             mother_value = json.loads(mother_genoma.string_value)
 
-            return [
+            return json.dumps([
                 (father_value[0] + mother_value[0]) / 2,
                 (father_value[1] + mother_value[1]) / 2,
                 (father_value[2] + mother_value[2]) / 2,
-            ]
+            ])
+
+        elif self.gene_type == 'FLOAT':
+            return str(
+                (float(father_genoma.string_value) + float(mother_genoma.string_value)) / 2
+            )
+        else:
+            raise Exception("Can't mix gene type " + self.gene_type.__str__())
 
 
 class Genoma(models.Model):
