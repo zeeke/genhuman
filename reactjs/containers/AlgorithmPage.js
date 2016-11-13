@@ -1,6 +1,7 @@
 import React from "react"
 import { connect } from "react-redux"
 import * as algorithmActions from "../actions/algorithmActions"
+import _ from 'underscore'
 
 @connect(state => (
     state.algorithms
@@ -64,12 +65,12 @@ class Individual extends React.Component {
 
     var toShowData = {}
 
-    var xmlString = template;
     genes.forEach(function(gene) {
       toShowData[gene.name] = this.getClientValue(jsonData, gene)
-      xmlString = xmlString.replace(new RegExp("{{" + gene.name + "}}", 'g'), this.getClientValue(jsonData, gene))
+      //xmlString = xmlString.replace(new RegExp("{{" + gene.name + "}}", 'g'), this.getClientValue(jsonData, gene))
     }.bind(this));
 
+    var xmlString = _.template(template)(toShowData) //Mustache.render(template, toShowData);
 
     let loading = this.props.item.loading ? <p>Loading ...</p> : <p></p>
 
@@ -78,7 +79,6 @@ class Individual extends React.Component {
         <div className="thumbnail">
           <div className="template-view" dangerouslySetInnerHTML={{__html: xmlString}}>
           </div>
-          <pre>{JSON.stringify(toShowData, null, 2)}</pre>
           {loading}
           <div className="form-inline">
             <div className={ "form-group " + (this.props.item.saved ? 'has-success': '') } >
@@ -91,6 +91,7 @@ class Individual extends React.Component {
             <button className="btn btn-default"
                     onClick={this.onSubmit}>-></button>
           </div>
+          <pre>{JSON.stringify(toShowData, null, 2)}</pre>
         </div>
       </div>
     )
