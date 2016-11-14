@@ -43,6 +43,12 @@ class Individual extends React.Component {
     this.props.dispatch(algorithmActions.individualValueChange(this.props.item.id, event.target.value))
   }
 
+  onKeyPress = (event) => {
+    if (event.key == 'Enter') {
+        this.props.dispatch(algorithmActions.submitIndividualValue(this.props.algorithm.id, this.props.item.id, this.props.item.value))
+    }
+  }
+
   onSubmit = (event) => {
     this.props.dispatch(algorithmActions.submitIndividualValue(this.props.algorithm.id, this.props.item.id, this.props.item.value))
   }
@@ -75,23 +81,24 @@ class Individual extends React.Component {
     let loading = this.props.item.loading ? <p>Loading ...</p> : <p></p>
 
     return (
-      <div className="col-md-3">
+      <div className="col-md-2">
         <div className="thumbnail">
           <div className="template-view" dangerouslySetInnerHTML={{__html: xmlString}}>
           </div>
           {loading}
-          <div className="form-inline">
-            <div className={ "form-group " + (this.props.item.saved ? 'has-success': '') } >
+          <div className="row">
+            <div className={ "col-md-8 form-group " + (this.props.item.saved ? 'has-success': '') } >
               <label className="sr-only">Value</label>
               <input type="number"
                      className="form-control"
                      value={this.props.item.value}
-                     onChange={this.onValueChange} />
+                     onChange={this.onValueChange}
+                     onKeyPress={this.onKeyPress} />
             </div>
             <button className="btn btn-default"
                     onClick={this.onSubmit}>-></button>
           </div>
-          <pre>{JSON.stringify(toShowData, null, 2)}</pre>
+          <pre className="hidden">{JSON.stringify(toShowData, null, 2)}</pre>
         </div>
       </div>
     )

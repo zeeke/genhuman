@@ -37,10 +37,9 @@ class AlgorithmItem extends React.Component {
   render() {
     return (
       <div key={this.props.item.id}>
-        {/*<Link to={`/algorithms/${this.props.item.id}`}>{this.props.item.title} - boia</Link>*/}
         <button className="btn btn-primary"
                 onClick={this.onSelectAlgorithm}>
-                {this.props.item.title} - boia
+                {this.props.item.title}
         </button>
       </div>
     )
